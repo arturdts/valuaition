@@ -3,103 +3,110 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Valu·AI·tion</title>
+<title>Valuation</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#141a1f; --paper:#f3f1ea; --line:#d8d3c4;
-    --green:#2e6b52; --green-soft:#e4ede8;
-    --amber:#a5691f; --amber-soft:#f1e7d6;
-    --mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-    --serif:'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --royal:#1d3fd6; --royal-dark:#16309f;
+    --ink:#1a1d24; --sub:#5b6270; --paper:#ffffff; --panel:#f5f6f8; --line:#e2e4e9;
+    --tag:#fff4e0; --tag-text:#8a5a12;
+    --font: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
     box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
   }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){ --ink:#eae6db; --paper:#15181c; --line:#33383e; --green-soft:#1c2b24; --amber-soft:#2b2419; }
-  }
-  :root[data-theme="dark"]{ --ink:#eae6db; --paper:#15181c; --line:#33383e; --green-soft:#1c2b24; --amber-soft:#2b2419; }
   html{scroll-padding-top:env(safe-area-inset-top,0px);}
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--paper);color:var(--ink);font-family:var(--serif);line-height:1.5;}
-  .wrap{max-width:800px;margin:0 auto;padding:48px 22px 80px;}
-  .brand{font-family:var(--mono);font-size:13px;color:var(--green);display:flex;align-items:center;gap:8px;}
-  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
-  h1{font-size:clamp(30px,5vw,42px);font-weight:600;letter-spacing:-0.01em;margin:16px 0 10px;}
-  .lede{font-size:17px;opacity:.8;max-width:56ch;}
-  .drop{margin-top:34px;border:1.5px dashed var(--line);border-radius:4px;padding:40px 24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
-  .drop.over{border-color:var(--green);background:var(--green-soft);}
-  .drop p{font-size:16px;}
-  .drop small{display:block;margin-top:8px;opacity:.6;font-family:var(--mono);font-size:12.5px;}
+  body{background:var(--paper);color:var(--ink);font-family:var(--font);line-height:1.5;}
+  header{background:var(--royal);color:#fff;padding:18px 22px;padding-top:calc(18px + env(safe-area-inset-top,0px));}
+  header .brand{font-weight:800;font-size:19px;letter-spacing:-0.01em;max-width:800px;margin:0 auto;}
+  .wrap{max-width:800px;margin:0 auto;padding:32px 22px 64px;}
+  h1{font-size:clamp(24px,4vw,30px);font-weight:700;letter-spacing:-0.01em;margin-bottom:8px;}
+  .lede{font-size:15px;color:var(--sub);max-width:56ch;}
+  .drop{margin-top:26px;border:1.5px dashed var(--line);border-radius:8px;padding:32px 24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:var(--panel);}
+  .drop.over{border-color:var(--royal);background:#eef0ff;}
+  .drop p{font-size:15px;font-weight:600;}
   input[type=file]{display:none;}
-  .btn{font-family:var(--mono);font-size:13px;border:1px solid var(--ink);background:transparent;color:var(--ink);padding:9px 16px;border-radius:20px;cursor:pointer;margin-top:14px;}
-  .btn:hover{background:var(--ink);color:var(--paper);}
-  .btn:disabled{opacity:.4;cursor:default;background:none;color:var(--ink);}
-  .pipeline{display:flex;flex-wrap:wrap;gap:0;margin:26px 0 6px;font-family:var(--mono);font-size:12.5px;}
-  .pipeline span{padding:7px 12px;border:1px solid var(--line);border-radius:20px;opacity:.55;}
-  .pipeline .arrow{border:none;padding:7px 4px;opacity:.35;}
-  .pipeline .active{background:var(--green-soft);color:var(--green);border-color:transparent;opacity:1;}
-  .pipeline .err{background:var(--amber-soft);color:var(--amber);border-color:transparent;opacity:1;}
-  .status{font-family:var(--mono);font-size:13.5px;margin-top:14px;min-height:20px;opacity:.85;}
-  .status.err{color:var(--amber);}
-  .stepline{display:flex;align-items:center;gap:10px;margin:40px 0 18px;}
-  .stepline .n{font-family:var(--mono);font-size:14px;opacity:.5;}
-  .stepline h2{font-size:19px;font-weight:600;}
-  .stepline::after{content:"";flex:1;height:1px;background:var(--line);}
-  .card{border:1px solid var(--line);border-radius:2px;padding:18px 20px;}
+  .btn{font-size:13.5px;font-weight:700;border:1.5px solid var(--royal);background:transparent;color:var(--royal);padding:9px 16px;border-radius:8px;cursor:pointer;margin-top:14px;}
+  .btn:hover{background:var(--royal);color:#fff;}
+  .btn:disabled{opacity:.4;cursor:default;background:none;color:var(--royal);}
+  .pipeline{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 6px;font-size:12px;font-weight:600;}
+  .pipeline span{padding:6px 11px;border:1px solid var(--line);border-radius:20px;color:var(--sub);}
+  .pipeline .arrow{border:none;padding:6px 2px;color:var(--line);}
+  .pipeline .active{background:#eef0ff;color:var(--royal);border-color:transparent;}
+  .pipeline .err{background:var(--tag);color:var(--tag-text);border-color:transparent;}
+  .status{font-size:13px;margin-top:12px;min-height:18px;color:var(--sub);}
+  .status.err{color:#b3450f;}
+  .stepline{display:flex;align-items:center;gap:10px;margin:36px 0 14px;}
+  .stepline .n{font-size:12.5px;font-weight:700;color:var(--royal);background:#eef0ff;padding:3px 8px;border-radius:20px;}
+  .stepline h2{font-size:17px;font-weight:700;}
+  .card{border:1px solid var(--line);border-radius:8px;padding:16px 18px;background:var(--panel);}
   .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13.5px;}
-  th{text-align:right;font-weight:600;padding:9px 8px;border-bottom:1px solid var(--ink);opacity:.85;white-space:nowrap;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{text-align:right;font-weight:700;padding:8px;color:var(--sub);white-space:nowrap;}
   th:first-child,td:first-child{text-align:left;}
-  td{text-align:right;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap;}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px;}
+  td{text-align:right;padding:8px;border-top:1px solid var(--line);white-space:nowrap;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px;}
   @media (max-width:640px){.grid{grid-template-columns:1fr;}}
-  .metric{border:1px solid var(--line);border-radius:2px;padding:16px;}
-  .metric .label{font-size:13.5px;opacity:.75;}
-  .metric .value{font-family:var(--mono);font-size:27px;font-weight:600;margin-top:6px;}
-  .metric .formula{font-family:var(--mono);font-size:11px;opacity:.5;margin-top:5px;}
-  .note{font-size:14px;opacity:.7;margin-top:12px;}
+  .metric{border:1px solid var(--line);border-radius:8px;padding:14px;background:#fff;}
+  .metric .label{font-size:12.5px;font-weight:600;color:var(--sub);}
+  .metric .value{font-size:25px;font-weight:800;margin-top:4px;color:var(--ink);}
+  .assumption{margin-top:10px;padding:9px 10px;border-radius:6px;background:var(--tag);color:var(--tag-text);font-size:12px;line-height:1.4;}
+  .assumption strong{display:block;margin-bottom:1px;}
+  .note{font-size:13px;color:var(--sub);margin-top:10px;}
   .hidden{display:none !important;}
-  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);font-size:13.5px;opacity:.65;max-width:64ch;}
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--sub);max-width:64ch;}
 </style>
 </head>
 <body>
+<header><div class="brand">Valuation</div></header>
 <div class="wrap">
 
-  <div class="brand"><span class="dot"></span>VALU·AI·TION</div>
-  <h1>Solte um balanço. Saia com os indicadores.</h1>
-  <p class="lede">Suba a demonstração financeira (balanço + DRE) de qualquer empresa, listada ou não, em PDF. Um parser por palavra-chave tenta ler tudo sozinho, de graça; a IA só entra se sobrar algum campo que ele não reconheceu.</p>
+  <h1>Solte um balanço, receba os indicadores.</h1>
+  <p class="lede">Balanço e DRE em PDF → parser lê sozinho e grátis; a IA só entra se faltar algo.</p>
 
   <div id="drop" class="drop">
     <p id="dropText">Arraste o PDF aqui, ou clique para escolher o arquivo</p>
-    <small>Funciona melhor com PDFs de texto selecionável (a maioria dos balanços gerados por sistema contábil)</small>
     <input type="file" id="fileInput" accept="application/pdf">
   </div>
 
   <div class="pipeline" id="pipeline">
-    <span id="p1">1. Leitura do PDF</span><span class="arrow">→</span>
-    <span id="p2">2. Parser por palavra-chave</span><span class="arrow">→</span>
-    <span id="p3">3. Cálculo dos índices</span>
+    <span id="p1">PDF</span><span class="arrow">→</span>
+    <span id="p2">Parser</span><span class="arrow">→</span>
+    <span id="p3">Índices</span>
   </div>
   <div class="status" id="status"></div>
 
   <div id="results" class="hidden">
-    <div class="stepline"><span class="n">01</span><h2 id="companyName">Empresa</h2></div>
+    <div class="stepline"><span class="n">·</span><h2 id="companyName">Empresa</h2></div>
+
+    <div class="stepline"><span class="n">01</span><h2>Balanço Patrimonial</h2></div>
     <div class="card">
       <div class="tablewrap">
-        <table id="accountsTable"><thead><tr><th style="text-align:left">Conta</th><th>Valor</th><th>Origem</th></tr></thead><tbody></tbody></table>
+        <table id="balanceTable"><thead><tr><th style="text-align:left">Conta</th><th>Valor</th><th>Origem</th></tr></thead><tbody></tbody></table>
       </div>
-      <p class="note" id="disclaimerNote"></p>
-      <button class="btn hidden" id="aiFallbackBtn">Tentar entender os campos faltando com IA</button>
     </div>
+    <div class="grid" id="balanceMetrics"></div>
 
-    <div class="stepline"><span class="n">02</span><h2>Indicadores</h2></div>
-    <div class="grid" id="metricsGrid"></div>
+    <div class="stepline"><span class="n">02</span><h2>Demonstração de Resultado</h2></div>
+    <div class="card">
+      <div class="tablewrap">
+        <table id="dreTable"><thead><tr><th style="text-align:left">Conta</th><th>Valor</th><th>Origem</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+    <div class="grid" id="dreMetrics"></div>
 
-    <button class="btn" id="resetBtn" style="margin-top:28px;">Analisar outro arquivo</button>
+    <div class="stepline"><span class="n">03</span><h2>Rentabilidade</h2></div>
+    <div class="grid" id="rentabilidadeMetrics"></div>
+
+    <p class="note" id="disclaimerNote"></p>
+    <button class="btn hidden" id="aiFallbackBtn">Tentar com IA</button>
+    <button class="btn" id="resetBtn" style="margin-top:14px;">Analisar outro arquivo</button>
   </div>
 
   <footer>
-    Nada do que você sobe fica salvo neste site — a leitura do PDF roda localmente no seu navegador. Só o texto das linhas não reconhecidas pelo parser é enviado ao backend de IA, quando você clica no botão de fallback. Protótipo de teste: confira sempre os números extraídos contra o PDF original antes de usar em qualquer decisão.
+    Nada do que você sobe fica salvo — leitura roda no seu navegador. Confira os números contra o PDF original antes de usar em decisões.
   </footer>
 </div>
 
@@ -232,7 +239,7 @@ async function handleFile(file){
   const totalChars = lines.join('\n').length;
   if (totalChars < 200){
     p1.className = 'err';
-    setStatus('Este PDF parece ser digitalizado (imagem), sem texto selecionável — a leitura direta não funciona ainda. Tente um PDF exportado do sistema contábil.', true);
+    setStatus('PDF parece ser imagem (sem texto selecionável) — tente um PDF exportado do sistema contábil.', true);
     return;
   }
 
@@ -250,7 +257,7 @@ async function handleFile(file){
   if (missing.length === 0){
     setStatus('Concluído — todos os campos encontrados sem precisar de IA.');
   } else {
-    setStatus('Parser encontrou ' + Object.keys(found).length + ' de ' + Object.keys(FIELD_LABELS).length + ' campos. Faltando: ' + missing.map(f => FIELD_LABELS[f]).join(', ') + '.');
+    setStatus(Object.keys(found).length + '/' + Object.keys(FIELD_LABELS).length + ' campos encontrados. Faltando: ' + missing.map(f => FIELD_LABELS[f]).join(', ') + '.');
     document.getElementById('aiFallbackBtn').classList.remove('hidden');
   }
 }
@@ -305,13 +312,13 @@ function fmt(n){
 }
 function pct(n){ return (n === null || !isFinite(n)) ? '—' : (n*100).toLocaleString('pt-BR',{maximumFractionDigits:1}) + '%'; }
 
-function renderResults(found, missing){
-  const nameLine = lastLines.find(l => /\b(s\.?a\.?|ltda\.?|eireli)\b/i.test(l) && l.length < 80);
-  document.getElementById('companyName').textContent = nameLine || 'Empresa (nome não identificado automaticamente)';
+const BALANCE_FIELDS = ['ativoTotal','ativoCirculante','passivoCirculante','passivoNaoCirculante','patrimonioLiquido'];
+const DRE_FIELDS = ['receitaLiquida','custoProdutosVendidos','lucroBruto','lucroLiquido'];
 
-  const tbody = document.querySelector('#accountsTable tbody');
+function fillTable(tbodyId, fields, found){
+  const tbody = document.querySelector('#' + tbodyId + ' tbody');
   tbody.innerHTML = '';
-  Object.keys(FIELD_LABELS).forEach(field => {
+  fields.forEach(field => {
     const entry = found[field];
     const tr = document.createElement('tr');
     if (entry){
@@ -321,12 +328,82 @@ function renderResults(found, missing){
     }
     tbody.appendChild(tr);
   });
+}
+
+// cada interpretação: faixas de valor -> {label, text} em linguagem simples
+const INTERPRET = {
+  liqCorrente: v => v >= 1.5
+    ? { label: 'Folga no curto prazo', text: 'pra cada R$1 de dívida que vence logo, a empresa tem mais de R$1,50 em ativo circulante — dá folga pra pagar as contas de curto prazo.' }
+    : v >= 1.0
+    ? { label: 'Cobertura apertada', text: 'o ativo circulante cobre o passivo circulante, mas com pouca margem — qualquer atraso no recebimento aperta o caixa.' }
+    : { label: 'Ativo circulante não cobre a dívida de curto prazo', text: 'o que a empresa tem disponível/a receber no curto prazo é menor que o que ela deve no curto prazo — sinal de possível aperto de caixa.' },
+  endividamento: v => v >= 0.70
+    ? { label: 'Muito alavancada em terceiros', text: 'a maior parte dos recursos da empresa vem de dívida (fornecedores, bancos), não dos sócios — dependência alta de capital de terceiros.' }
+    : v >= 0.40
+    ? { label: 'Mix equilibrado', text: 'a empresa usa uma combinação razoável entre capital de terceiros e capital próprio pra se financiar.' }
+    : { label: 'Pouco dependente de terceiros', text: 'a empresa é financiada majoritariamente por capital próprio, com pouca dívida perto do tamanho do ativo.' },
+  composicaoDivida: v => v >= 0.70
+    ? { label: 'Dívida concentrada no curto prazo', text: 'a maior parte do que a empresa deve vence logo — exige mais atenção ao caixa imediato.' }
+    : v <= 0.30
+    ? { label: 'Dívida concentrada no longo prazo', text: 'a maior parte do que a empresa deve só vence lá na frente — dá mais fôlego no curto prazo.' }
+    : { label: 'Dívida distribuída', text: 'a dívida está relativamente equilibrada entre o que vence logo e o que vence no longo prazo.' },
+  capitalProprio: v => v < 0.10
+    ? { label: 'Capital próprio insignificante perto do ativo', text: 'os sócios têm pouco recurso aportado frente ao tamanho da empresa — ela está fortemente alavancada em capital de terceiros.' }
+    : v < 0.30
+    ? { label: 'Capital próprio moderado', text: 'os sócios têm uma parcela razoável, mas a empresa ainda depende bastante de recursos de terceiros.' }
+    : { label: 'Base de capital próprio robusta', text: 'os sócios sustentam boa parte do ativo com recurso próprio, reduzindo a dependência de terceiros.' },
+  margemBruta: v => v >= 0.5
+    ? { label: 'Margem bruta alta', text: 'sobra proporcionalmente bastante depois de pagar o custo direto do produto/serviço — geralmente sinal de alto valor agregado.' }
+    : v >= 0.2
+    ? { label: 'Margem bruta típica', text: 'faixa comum pra maioria dos setores — nem alto valor agregado, nem operação de margem apertadíssima.' }
+    : { label: 'Margem bruta baixa', text: 'o custo direto consome a maior parte da receita — comum em operações de revenda/commodity, mas exige volume alto pra compensar.' },
+  margemLiquida: v => v <= 0
+    ? { label: 'Prejuízo no período', text: 'a empresa fechou o período com resultado negativo — vendeu, mas não sobrou lucro.' }
+    : v < 0.05
+    ? { label: 'Margem líquida apertada', text: 'pouca sobra de cada real vendido depois de todos os custos e despesas.' }
+    : v < 0.15
+    ? { label: 'Margem líquida razoável', text: 'sobra de lucro dentro do que costuma ser saudável pra maioria dos negócios.' }
+    : { label: 'Margem líquida alta', text: 'sobra proporcionalmente bastante lucro de cada real vendido.' },
+  roe: v => v <= 0
+    ? { label: 'Destruindo patrimônio no período', text: 'o prejuízo do período reduziu o patrimônio dos sócios em vez de remunerá-lo.' }
+    : v < 0.10
+    ? { label: 'Retorno baixo sobre o capital próprio', text: 'o retorno pros sócios ficou abaixo do que referências de mercado (ex: renda fixa) costumam pagar.' }
+    : v < 0.20
+    ? { label: 'Retorno razoável', text: 'o lucro sobre o capital próprio ficou numa faixa saudável.' }
+    : { label: 'Retorno alto sobre o capital próprio', text: 'os sócios estão sendo bem remunerados pelo capital investido na empresa.' },
+  roa: v => v <= 0
+    ? { label: 'Ativo não está gerando retorno', text: 'no período, o total de bens e direitos da empresa não gerou lucro — gerou prejuízo.' }
+    : v < 0.03
+    ? { label: 'Retorno baixo sobre o ativo', text: 'a empresa gera pouco lucro perto do tamanho total dos seus ativos.' }
+    : v < 0.08
+    ? { label: 'Retorno razoável sobre o ativo', text: 'o uso do ativo total pra gerar lucro está numa faixa comum.' }
+    : { label: 'Retorno alto sobre o ativo', text: 'a empresa está sendo eficiente gerando lucro a partir do que possui.' },
+};
+
+function metricCard(label, value, interpretKey, rawValue){
+  const div = document.createElement('div');
+  div.className = 'metric';
+  let assumption = '';
+  if (interpretKey && rawValue != null && isFinite(rawValue)){
+    const r = INTERPRET[interpretKey](rawValue);
+    assumption = `<div class="assumption"><strong>${r.label}</strong>${r.text}</div>`;
+  }
+  div.innerHTML = `<div class="label">${label}</div><div class="value">${value}</div>${assumption}`;
+  return div;
+}
+
+function renderResults(found, missing){
+  const nameLine = lastLines.find(l => /\b(s\.?a\.?|ltda\.?|eireli)\b/i.test(l) && l.length < 80);
+  document.getElementById('companyName').textContent = nameLine || 'Empresa (nome não identificado automaticamente)';
+
+  fillTable('balanceTable', BALANCE_FIELDS, found);
+  fillTable('dreTable', DRE_FIELDS, found);
+
   document.getElementById('disclaimerNote').textContent = missing.length
     ? 'Campos ainda não encontrados: ' + missing.map(f => FIELD_LABELS[f]).join(', ') + '.'
     : '';
 
   const get = f => found[f] ? found[f].value : null;
-  const m = [];
   const ativoCirculante = get('ativoCirculante'), passivoCirculante = get('passivoCirculante');
   const passivoNaoCirculante = get('passivoNaoCirculante'), ativoTotal = get('ativoTotal');
   const patrimonioLiquido = get('patrimonioLiquido'), receitaLiquida = get('receitaLiquida');
@@ -336,30 +413,31 @@ function renderResults(found, missing){
   const passivoTotal = (passivoCirculante!=null && passivoNaoCirculante!=null) ? passivoCirculante+passivoNaoCirculante : null;
   const endividamento = (passivoTotal!=null && ativoTotal) ? passivoTotal/ativoTotal : null;
   const composicaoDivida = (passivoTotal && passivoCirculante!=null) ? passivoCirculante/passivoTotal : null;
+  const capitalProprio = (patrimonioLiquido!=null && ativoTotal) ? patrimonioLiquido/ativoTotal : null;
   const margemBruta = (lucroBruto!=null && receitaLiquida) ? lucroBruto/receitaLiquida : null;
   const margemLiquida = (lucroLiquido!=null && receitaLiquida) ? lucroLiquido/receitaLiquida : null;
   const roe = (lucroLiquido!=null && patrimonioLiquido) ? lucroLiquido/patrimonioLiquido : null;
   const roa = (lucroLiquido!=null && ativoTotal) ? lucroLiquido/ativoTotal : null;
 
-  if (liqCorrente!=null) m.push(['Liquidez Corrente', liqCorrente.toFixed(2), 'Ativo Circulante ÷ Passivo Circulante']);
-  if (endividamento!=null) m.push(['Endividamento Geral', pct(endividamento), 'Passivo Total ÷ Ativo Total']);
-  if (composicaoDivida!=null) m.push(['Composição da Dívida', pct(composicaoDivida), '% do passivo no curto prazo']);
-  if (margemBruta!=null) m.push(['Margem Bruta', pct(margemBruta), 'Lucro Bruto ÷ Receita Líquida']);
-  if (margemLiquida!=null) m.push(['Margem Líquida', pct(margemLiquida), 'Lucro Líquido ÷ Receita Líquida']);
-  if (roe!=null) m.push(['ROE', pct(roe), 'Lucro Líquido ÷ Patrimônio Líquido']);
-  if (roa!=null) m.push(['ROA', pct(roa), 'Lucro Líquido ÷ Ativo Total']);
+  const balanceGrid = document.getElementById('balanceMetrics');
+  balanceGrid.innerHTML = '';
+  if (liqCorrente!=null) balanceGrid.appendChild(metricCard('Liquidez Corrente', liqCorrente.toFixed(2), 'liqCorrente', liqCorrente));
+  if (endividamento!=null) balanceGrid.appendChild(metricCard('Endividamento Geral', pct(endividamento), 'endividamento', endividamento));
+  if (composicaoDivida!=null) balanceGrid.appendChild(metricCard('Composição da Dívida', pct(composicaoDivida), 'composicaoDivida', composicaoDivida));
+  if (capitalProprio!=null) balanceGrid.appendChild(metricCard('Capital Próprio / Ativo', pct(capitalProprio), 'capitalProprio', capitalProprio));
+  if (!balanceGrid.children.length) balanceGrid.innerHTML = '<p class="note">Faltam contas do balanço pra calcular esses índices.</p>';
 
-  const grid = document.getElementById('metricsGrid');
-  grid.innerHTML = '';
-  if (m.length === 0){
-    grid.innerHTML = '<p class="note">Não foi possível calcular indicadores — faltam contas suficientes no PDF extraído.</p>';
-  }
-  m.forEach(([label, value, formula]) => {
-    const div = document.createElement('div');
-    div.className = 'metric';
-    div.innerHTML = `<div class="label">${label}</div><div class="value">${value}</div><div class="formula">${formula}</div>`;
-    grid.appendChild(div);
-  });
+  const dreGrid = document.getElementById('dreMetrics');
+  dreGrid.innerHTML = '';
+  if (margemBruta!=null) dreGrid.appendChild(metricCard('Margem Bruta', pct(margemBruta), 'margemBruta', margemBruta));
+  if (margemLiquida!=null) dreGrid.appendChild(metricCard('Margem Líquida', pct(margemLiquida), 'margemLiquida', margemLiquida));
+  if (!dreGrid.children.length) dreGrid.innerHTML = '<p class="note">Faltam contas da DRE pra calcular esses índices.</p>';
+
+  const rentGrid = document.getElementById('rentabilidadeMetrics');
+  rentGrid.innerHTML = '';
+  if (roe!=null) rentGrid.appendChild(metricCard('ROE', pct(roe), 'roe', roe));
+  if (roa!=null) rentGrid.appendChild(metricCard('ROA', pct(roa), 'roa', roa));
+  if (!rentGrid.children.length) rentGrid.innerHTML = '<p class="note">Faltam contas de balanço e DRE juntas pra calcular rentabilidade.</p>';
 
   results.classList.remove('hidden');
 }
