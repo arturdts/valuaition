@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Valu·AI·tion</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --ink:#141a1f; --paper:#f3f1ea; --line:#d8d3c4;
+    --green:#2e6b52; --green-soft:#e4ede8;
+    --amber:#a5691f; --amber-soft:#f1e7d6;
+    --mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --serif:'Source Serif 4', Georgia, 'Times New Roman', serif;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --ink:#eae6db; --paper:#15181c; --line:#33383e; --green-soft:#1c2b24; --amber-soft:#2b2419; }
+  }
+  :root[data-theme="dark"]{ --ink:#eae6db; --paper:#15181c; --line:#33383e; --green-soft:#1c2b24; --amber-soft:#2b2419; }
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--paper);color:var(--ink);font-family:var(--serif);line-height:1.5;}
+  .wrap{max-width:800px;margin:0 auto;padding:48px 22px 80px;}
+  .brand{font-family:var(--mono);font-size:13px;color:var(--green);display:flex;align-items:center;gap:8px;}
+  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
+  h1{font-size:clamp(30px,5vw,42px);font-weight:600;letter-spacing:-0.01em;margin:16px 0 10px;}
+  .lede{font-size:17px;opacity:.8;max-width:56ch;}
+  .drop{margin-top:34px;border:1.5px dashed var(--line);border-radius:4px;padding:40px 24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
+  .drop.over{border-color:var(--green);background:var(--green-soft);}
+  .drop p{font-size:16px;}
+  .drop small{display:block;margin-top:8px;opacity:.6;font-family:var(--mono);font-size:12.5px;}
+  input[type=file]{display:none;}
+  .btn{font-family:var(--mono);font-size:13px;border:1px solid var(--ink);background:transparent;color:var(--ink);padding:9px 16px;border-radius:20px;cursor:pointer;margin-top:14px;}
+  .btn:hover{background:var(--ink);color:var(--paper);}
+  .btn:disabled{opacity:.4;cursor:default;background:none;color:var(--ink);}
+  .pipeline{display:flex;flex-wrap:wrap;gap:0;margin:26px 0 6px;font-family:var(--mono);font-size:12.5px;}
+  .pipeline span{padding:7px 12px;border:1px solid var(--line);border-radius:20px;opacity:.55;}
+  .pipeline .arrow{border:none;padding:7px 4px;opacity:.35;}
+  .pipeline .active{background:var(--green-soft);color:var(--green);border-color:transparent;opacity:1;}
+  .pipeline .err{background:var(--amber-soft);color:var(--amber);border-color:transparent;opacity:1;}
+  .status{font-family:var(--mono);font-size:13.5px;margin-top:14px;min-height:20px;opacity:.85;}
+  .status.err{color:var(--amber);}
+  .stepline{display:flex;align-items:center;gap:10px;margin:40px 0 18px;}
+  .stepline .n{font-family:var(--mono);font-size:14px;opacity:.5;}
+  .stepline h2{font-size:19px;font-weight:600;}
+  .stepline::after{content:"";flex:1;height:1px;background:var(--line);}
+  .card{border:1px solid var(--line);border-radius:2px;padding:18px 20px;}
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13.5px;}
+  th{text-align:right;font-weight:600;padding:9px 8px;border-bottom:1px solid var(--ink);opacity:.85;white-space:nowrap;}
+  th:first-child,td:first-child{text-align:left;}
+  td{text-align:right;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px;}
+  @media (max-width:640px){.grid{grid-template-columns:1fr;}}
+  .metric{border:1px solid var(--line);border-radius:2px;padding:16px;}
+  .metric .label{font-size:13.5px;opacity:.75;}
+  .metric .value{font-family:var(--mono);font-size:27px;font-weight:600;margin-top:6px;}
+  .metric .formula{font-family:var(--mono);font-size:11px;opacity:.5;margin-top:5px;}
+  .note{font-size:14px;opacity:.7;margin-top:12px;}
+  .hidden{display:none !important;}
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);font-size:13.5px;opacity:.65;max-width:64ch;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand"><span class="dot"></span>VALU·AI·TION</div>
+  <h1>Solte um balanço. Saia com os indicadores.</h1>
+  <p class="lede">Suba a demonstração financeira (balanço + DRE) de qualquer empresa, listada ou não, em PDF. Um parser por palavra-chave tenta ler tudo sozinho, de graça; a IA só entra se sobrar algum campo que ele não reconheceu.</p>
+
+  <div id="drop" class="drop">
+    <p id="dropText">Arraste o PDF aqui, ou clique para escolher o arquivo</p>
+    <small>Funciona melhor com PDFs de texto selecionável (a maioria dos balanços gerados por sistema contábil)</small>
+    <input type="file" id="fileInput" accept="application/pdf">
+  </div>
+
+  <div class="pipeline" id="pipeline">
+    <span id="p1">1. Leitura do PDF</span><span class="arrow">→</span>
+    <span id="p2">2. Parser por palavra-chave</span><span class="arrow">→</span>
+    <span id="p3">3. Cálculo dos índices</span>
+  </div>
+  <div class="status" id="status"></div>
+
+  <div id="results" class="hidden">
+    <div class="stepline"><span class="n">01</span><h2 id="companyName">Empresa</h2></div>
+    <div class="card">
+      <div class="tablewrap">
+        <table id="accountsTable"><thead><tr><th style="text-align:left">Conta</th><th>Valor</th><th>Origem</th></tr></thead><tbody></tbody></table>
+      </div>
+      <p class="note" id="disclaimerNote"></p>
+      <button class="btn hidden" id="aiFallbackBtn">Tentar entender os campos faltando com IA</button>
+    </div>
+
+    <div class="stepline"><span class="n">02</span><h2>Indicadores</h2></div>
+    <div class="grid" id="metricsGrid"></div>
+
+    <button class="btn" id="resetBtn" style="margin-top:28px;">Analisar outro arquivo</button>
+  </div>
+
+  <footer>
+    Nada do que você sobe fica salvo neste site — a leitura do PDF roda localmente no seu navegador. Só o texto das linhas não reconhecidas pelo parser é enviado ao backend de IA, quando você clica no botão de fallback. Protótipo de teste: confira sempre os números extraídos contra o PDF original antes de usar em qualquer decisão.
+  </footer>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+const FIELD_LABELS = {
+  ativoTotal:'Ativo Total', ativoCirculante:'Ativo Circulante',
+  passivoCirculante:'Passivo Circulante', passivoNaoCirculante:'Passivo Não Circulante',
+  patrimonioLiquido:'Patrimônio Líquido', receitaLiquida:'Receita Líquida',
+  custoProdutosVendidos:'Custo dos Produtos/Serviços', lucroBruto:'Lucro Bruto',
+  lucroLiquido:'Lucro Líquido',
+};
+// ordem importa: mais específico primeiro, pra "ativo circulante" não perder pra um regex genérico de "ativo"
+const FIELD_PATTERNS = [
+  ['ativoCirculante', /\bativo circulante\b(?! l[ií]quido)/i],
+  ['passivoNaoCirculante', /\bpassivo n[ãa]o circulante\b/i],
+  ['passivoCirculante', /\bpassivo circulante\b/i],
+  ['ativoTotal', /^(?:\d[\d.]*\s+)?ativo total\b|\btotal do ativo\b/i],
+  ['patrimonioLiquido', /\bpatrim[oô]nio l[ií]quido(?: consolidado| atribu[ií]do)?\b(?! -)/i],
+  ['receitaLiquida', /\breceita (?:operacional )?l[ií]quida\b/i],
+  ['custoProdutosVendidos', /\bcusto (?:dos? produtos?(?: vendidos)?|das? mercadorias vendidas|dos? servi[cç]os prestados)\b/i],
+  ['lucroBruto', /\blucro bruto\b/i],
+  ['lucroLiquido', /\b(?:lucro|resultado) l[ií]quido (?:consolidado )?do (?:per[ií]odo|exerc[ií]cio)\b/i],
+];
+const NUM_RE = /-?\(?\d{1,3}(?:\.\d{3})*(?:,\d+)?\)?/;
+
+function toNumber(str){
+  if (!str) return null;
+  let neg = /^\(.*\)$/.test(str.trim());
+  let s = str.replace(/[()]/g,'').trim();
+  s = s.replace(/\./g,'').replace(',', '.');
+  let n = parseFloat(s);
+  if (isNaN(n)) return null;
+  return neg ? -Math.abs(n) : n;
+}
+
+async function extractLines(pdf){
+  const lines = [];
+  for (let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const rows = {};
+    content.items.forEach(it => {
+      const y = Math.round(it.transform[5] / 2) * 2;
+      (rows[y] = rows[y] || []).push({ x: it.transform[4], str: it.str });
+    });
+    Object.keys(rows).map(Number).sort((a,b) => b - a).forEach(y => {
+      const line = rows[y].sort((a,b) => a.x - b.x).map(r => r.str).join(' ').replace(/\s+/g,' ').trim();
+      if (line) lines.push(line);
+    });
+    if (lines.length > 4000) break;
+  }
+  return lines;
+}
+
+function parseByKeyword(lines){
+  const found = {}; // field -> {value, line}
+  for (const line of lines){
+    for (const [field, re] of FIELD_PATTERNS){
+      if (found[field]) continue;
+      const m = re.exec(line);
+      if (!m) continue;
+      const after = line.slice(m.index + m[0].length);
+      const numM = NUM_RE.exec(after);
+      if (!numM) continue;
+      const val = toNumber(numM[0]);
+      if (val === null) continue;
+      found[field] = { value: val, line: line.slice(0, 90) };
+    }
+  }
+  return found;
+}
+
+function numericLines(lines){
+  // heurística pra encolher o texto: só linhas que parecem ter um valor monetário relevante
+  return lines.filter(l => {
+    const m = NUM_RE.exec(l);
+    return m && m[0].replace(/[^\d]/g,'').length >= 4 && l.length < 160;
+  });
+}
+
+const drop = document.getElementById('drop');
+const dropText = document.getElementById('dropText');
+const fileInput = document.getElementById('fileInput');
+const statusEl = document.getElementById('status');
+const results = document.getElementById('results');
+const resetBtn = document.getElementById('resetBtn');
+const p1 = document.getElementById('p1'), p2 = document.getElementById('p2'), p3 = document.getElementById('p3');
+
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+resetBtn.addEventListener('click', () => {
+  results.classList.add('hidden'); statusEl.textContent = ''; statusEl.className = 'status';
+  [p1,p2,p3].forEach(p => p.className = '');
+  dropText.textContent = 'Arraste o PDF aqui, ou clique para escolher o arquivo';
+  fileInput.value = ''; lastLines = []; lastParsed = {};
+  document.getElementById('aiFallbackBtn').classList.add('hidden');
+});
+
+function setStatus(msg, isErr){ statusEl.textContent = msg; statusEl.className = isErr ? 'status err' : 'status'; }
+
+let lastLines = [];
+let lastParsed = {};
+
+async function handleFile(file){
+  results.classList.add('hidden');
+  dropText.textContent = file.name;
+  [p1,p2,p3].forEach(p => p.className = '');
+  p1.className = 'active';
+  setStatus('Lendo o PDF...');
+
+  let lines;
+  try{
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    lines = await extractLines(pdf);
+  } catch(e){
+    p1.className = 'err';
+    setStatus('Não consegui ler este PDF (' + (e.message || 'erro desconhecido') + ').', true);
+    return;
+  }
+
+  const totalChars = lines.join('\n').length;
+  if (totalChars < 200){
+    p1.className = 'err';
+    setStatus('Este PDF parece ser digitalizado (imagem), sem texto selecionável — a leitura direta não funciona ainda. Tente um PDF exportado do sistema contábil.', true);
+    return;
+  }
+
+  p1.className = 'active'; p2.className = 'active';
+  setStatus('Rodando o parser por palavra-chave (sem IA, sem custo)...');
+
+  const found = parseByKeyword(lines);
+  lastLines = lines;
+  lastParsed = found;
+
+  const missing = Object.keys(FIELD_LABELS).filter(f => !found[f]);
+  p2.className = 'active'; p3.className = 'active';
+  renderResults(found, missing);
+
+  if (missing.length === 0){
+    setStatus('Concluído — todos os campos encontrados sem precisar de IA.');
+  } else {
+    setStatus('Parser encontrou ' + Object.keys(found).length + ' de ' + Object.keys(FIELD_LABELS).length + ' campos. Faltando: ' + missing.map(f => FIELD_LABELS[f]).join(', ') + '.');
+    document.getElementById('aiFallbackBtn').classList.remove('hidden');
+  }
+}
+
+// Aponte para a URL do seu Worker depois do deploy (passo 2 do README)
+const AI_ENDPOINT = 'https://SEU-WORKER.SEU-SUBDOMINIO.workers.dev';
+
+document.getElementById('aiFallbackBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('aiFallbackBtn');
+  btn.disabled = true;
+  const missing = Object.keys(FIELD_LABELS).filter(f => !lastParsed[f]);
+  setStatus('Pedindo pra IA entender os sinônimos dos campos faltando...');
+
+  if (!AI_ENDPOINT || AI_ENDPOINT.includes('SEU-WORKER')){
+    setStatus('Backend de IA ainda não configurado — veja o README (AI_ENDPOINT no index.html).', true);
+    btn.disabled = false;
+    return;
+  }
+
+  const candLines = numericLines(lastLines).slice(0, 300);
+
+  let data;
+  try{
+    const res = await fetch(AI_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ missing, labels: FIELD_LABELS, lines: candLines }),
+    });
+    if (!res.ok) throw new Error('status ' + res.status);
+    data = await res.json();
+  } catch(e){
+    setStatus('Erro ao falar com o backend de IA: ' + e.message, true);
+    btn.disabled = false;
+    return;
+  }
+
+  missing.forEach(f => {
+    if (data[f] !== null && data[f] !== undefined && !isNaN(data[f])){
+      lastParsed[f] = { value: Number(data[f]), line: null, ai: true };
+    }
+  });
+  const stillMissing = Object.keys(FIELD_LABELS).filter(f => !lastParsed[f]);
+  renderResults(lastParsed, stillMissing);
+  setStatus(data.observacao ? ('IA: ' + data.observacao) : 'IA preencheu o que conseguiu encontrar.');
+  if (stillMissing.length === 0) btn.classList.add('hidden');
+  btn.disabled = false;
+});
+
+function fmt(n){
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+}
+function pct(n){ return (n === null || !isFinite(n)) ? '—' : (n*100).toLocaleString('pt-BR',{maximumFractionDigits:1}) + '%'; }
+
+function renderResults(found, missing){
+  const nameLine = lastLines.find(l => /\b(s\.?a\.?|ltda\.?|eireli)\b/i.test(l) && l.length < 80);
+  document.getElementById('companyName').textContent = nameLine || 'Empresa (nome não identificado automaticamente)';
+
+  const tbody = document.querySelector('#accountsTable tbody');
+  tbody.innerHTML = '';
+  Object.keys(FIELD_LABELS).forEach(field => {
+    const entry = found[field];
+    const tr = document.createElement('tr');
+    if (entry){
+      tr.innerHTML = `<td>${FIELD_LABELS[field]}</td><td>${fmt(entry.value)}</td><td style="opacity:.55">${entry.ai ? 'IA' : 'Parser'}</td>`;
+    } else {
+      tr.innerHTML = `<td>${FIELD_LABELS[field]}</td><td>—</td><td style="opacity:.4">não encontrado</td>`;
+    }
+    tbody.appendChild(tr);
+  });
+  document.getElementById('disclaimerNote').textContent = missing.length
+    ? 'Campos ainda não encontrados: ' + missing.map(f => FIELD_LABELS[f]).join(', ') + '.'
+    : '';
+
+  const get = f => found[f] ? found[f].value : null;
+  const m = [];
+  const ativoCirculante = get('ativoCirculante'), passivoCirculante = get('passivoCirculante');
+  const passivoNaoCirculante = get('passivoNaoCirculante'), ativoTotal = get('ativoTotal');
+  const patrimonioLiquido = get('patrimonioLiquido'), receitaLiquida = get('receitaLiquida');
+  const lucroBruto = get('lucroBruto'), lucroLiquido = get('lucroLiquido');
+
+  const liqCorrente = (ativoCirculante!=null && passivoCirculante) ? ativoCirculante/passivoCirculante : null;
+  const passivoTotal = (passivoCirculante!=null && passivoNaoCirculante!=null) ? passivoCirculante+passivoNaoCirculante : null;
+  const endividamento = (passivoTotal!=null && ativoTotal) ? passivoTotal/ativoTotal : null;
+  const composicaoDivida = (passivoTotal && passivoCirculante!=null) ? passivoCirculante/passivoTotal : null;
+  const margemBruta = (lucroBruto!=null && receitaLiquida) ? lucroBruto/receitaLiquida : null;
+  const margemLiquida = (lucroLiquido!=null && receitaLiquida) ? lucroLiquido/receitaLiquida : null;
+  const roe = (lucroLiquido!=null && patrimonioLiquido) ? lucroLiquido/patrimonioLiquido : null;
+  const roa = (lucroLiquido!=null && ativoTotal) ? lucroLiquido/ativoTotal : null;
+
+  if (liqCorrente!=null) m.push(['Liquidez Corrente', liqCorrente.toFixed(2), 'Ativo Circulante ÷ Passivo Circulante']);
+  if (endividamento!=null) m.push(['Endividamento Geral', pct(endividamento), 'Passivo Total ÷ Ativo Total']);
+  if (composicaoDivida!=null) m.push(['Composição da Dívida', pct(composicaoDivida), '% do passivo no curto prazo']);
+  if (margemBruta!=null) m.push(['Margem Bruta', pct(margemBruta), 'Lucro Bruto ÷ Receita Líquida']);
+  if (margemLiquida!=null) m.push(['Margem Líquida', pct(margemLiquida), 'Lucro Líquido ÷ Receita Líquida']);
+  if (roe!=null) m.push(['ROE', pct(roe), 'Lucro Líquido ÷ Patrimônio Líquido']);
+  if (roa!=null) m.push(['ROA', pct(roa), 'Lucro Líquido ÷ Ativo Total']);
+
+  const grid = document.getElementById('metricsGrid');
+  grid.innerHTML = '';
+  if (m.length === 0){
+    grid.innerHTML = '<p class="note">Não foi possível calcular indicadores — faltam contas suficientes no PDF extraído.</p>';
+  }
+  m.forEach(([label, value, formula]) => {
+    const div = document.createElement('div');
+    div.className = 'metric';
+    div.innerHTML = `<div class="label">${label}</div><div class="value">${value}</div><div class="formula">${formula}</div>`;
+    grid.appendChild(div);
+  });
+
+  results.classList.remove('hidden');
+}
+</script>
+</body>
+</html>
