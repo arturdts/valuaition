@@ -397,7 +397,7 @@ const FIELD_PATTERNS = [
   ['ativoTotal', /^(?:\d[\d.]*\s+)?ativos? tota(?:l|is)\b|\btotal d[oe]s? ativos?\b(?! (?:n[ãa]o )?circulantes?| realiz[aá]vel)/i],
   ['patrimonioLiquido', /(?<!passivo e |passivo \+ |passivos e )\bpatrim[oô]nio (?:l[ií]quido(?: consolidado| atribu[ií]do)?|social)\b(?! -)/i],   // "social": associações
   ['receitaLiquida', /\breceitas? (?:l[ií]quidas? de vendas(?: e\/ou servi[cç]os)?|de vendas?|(?:operaciona(?:l|is) )?l[ií]quidas?|brutas?)\b|^receita total\b|\bvendas l[ií]quidas\b|\bfaturamento\b/i],
-  ['custoProdutosVendidos', /\bcustos? (?:d[ao]s? bens(?: e\/ou servi[cç]os)?(?: vendidos)?|d[ao]s? produtos?(?: e servi[cç]os)?(?: vendidos)?|d[ao]s? mercadorias (?:re)?vendidas|d[ao]s? servi[cç]os prestados|das vendas)\b|^(?:cmv|cpv|csp)\b|^custos operacionais\b|^custos? d[ao]s? (?:im[oó]veis|unidades|obras)(?: vendid[oa]s)?\b/i],
+  ['custoProdutosVendidos', /\bcustos? (?:d[ao]s? bens(?: e\/ou servi[cç]os)?(?: vendidos)?|d[ao]s? produtos?(?: e servi[cç]os)?(?: vendidos)?|d[ao]s? mercadorias (?:(?:e (?:d[ao]s? )?servi[cç]os )?(?:re)?vendid[oa]s)|d[ao]s? servi[cç]os prestados|das vendas)\b|^(?:cmv|cpv|csp)\b|^custos operacionais\b|^custos? d[ao]s? (?:im[oó]veis|unidades|obras)(?: vendid[oa]s)?\b/i],
   ['lucroBruto', /\b(?:lucro|resultado) bruto\b/i],
   ['ebit', /\b(?:lucro|resultado) antes do resultado financeiro\b|\bresultado operacional\b(?! l[ií]quido| antes d[aeo]s? (?:impostos?|tributos|ir\b))|\blucro(?: \(preju[ií]zo\))? operacional\b(?! antes d[aeo]s? (?:impostos?|tributos|ir\b))|\bebit\b/i],
   ['lucroLiquido', /\b(?:lucro|resultado) l[ií]quido(?: \(preju[ií]zo\))? (?:consolidado )?do (?:per[ií]odo|exerc[ií]cio)\b|\blucro(?: \(preju[ií]zo\)|\/preju[ií]zo)?(?: l[ií]quido)? (?:consolidado )?do (?:per[ií]odo|exerc[ií]cio)\b|^(?:lucro|preju[ií]zo|lucro \(preju[ií]zo\)) l[ií]quido(?= -?\(?\d)|^preju[ií]zo(?: l[ií]quido)? do (?:per[ií]odo|exerc[ií]cio)\b/i],
@@ -1079,6 +1079,7 @@ function parsePage(rows, found, pageIdx, ctx){
       const colEnts = colInfo ? [...new Set(colInfo.columns.map(c => c.entity).filter(Boolean))] : [];
       const ent = ctx.entity || (colEnts.length === 1 ? colEnts[0] : null);
       const existing = found[field];
+      if (field === 'receitaLiquida' && /^(?:\d[\d.]*\s+)?\(-\)/.test(row.text)) continue;   // "(-) PIS sobre faturamento" é dedução
       const m = re.exec(matchLabel) || (aliasField === field ? [labelText] : null);
       // receita bruta só vale enquanto a líquida não aparece
       // PL "atribuível aos controladores" também cede ao "Total do patrimônio líquido" (que fecha o balanço)
@@ -1467,7 +1468,9 @@ function companyLabel(pages){
   const nameLine = pages.flat().find(l => COMPANY_RE.test(l.text) && l.text.length < 80 && !/\d{2,}\s+\d/.test(l.text));
   if (nameLine) return nameLine.text.replace(/\s*\bp[áa]gina\s*\d+.*$/i, '').replace(/\s*\bp[áa]g\.?\s*\d+.*$/i, '')
     .replace(/^(?:itr|dfp)\b.*?\d{2}\/\d{2}\/\d{4}\s*-\s*/i, '')   // cabeçalho do PDF da CVM: 'ITR - Informações Trimestrais - 30/06/2026 - '
-    .replace(/\s*vers[aã]o\s*:?\s*\d+.*$/i, '').trim();            // '... Versão : 1'
+    .replace(/\s*vers[aã]o\s*:?\s*\d+.*$/i, '')                    // '... Versão : 1'
+    .replace(/^(?:empresa|raz[aã]o social|nome(?: empresarial)?|entidade)\s*:\s*/i, '')   // relatório de sistema contábil: 'Empresa: ...'
+    .replace(/\s+(?:folha|fls?\.?)\s*:?\s*\d+.*$/i, '').trim();      // '... Folha: 0001'
   return companyHints(pages).hint;
 }
 function docIdentity(pages, found){
@@ -1727,7 +1730,11 @@ function toneFromChange(chg, goodWhen){
   const cls = !goodWhen ? 'flat' : ((goodWhen === 'up') === up ? 'good' : 'bad');
   return { cls, arrow: up ? '▲' : '▼', tip: cls === 'flat' ? TONE_TIP.neutral : TONE_TIP[cls] };
 }
-const signed = (x, digits) => (x > 0 ? '+' : '') + x.toLocaleString('pt-BR', { maximumFractionDigits: digits == null ? 1 : digits });
+// arredonda antes de pôr o sinal: variação de 0,001 não vira "+0" nem "-0"
+const signed = (x, digits) => {
+  const d = digits == null ? 1 : digits, r = Math.round(x * 10 ** d) / 10 ** d;
+  return (r > 0 ? '+' : '') + (r === 0 ? 0 : r).toLocaleString('pt-BR', { maximumFractionDigits: d });
+};
 function pctPoints(cur, prev, goodWhen, approx){
   if (cur == null || prev == null || !isFinite(cur) || !isFinite(prev)) return '';
   const d = (cur - prev) * 100, t = toneFromChange(d, goodWhen);
