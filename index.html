@@ -399,8 +399,8 @@ const FIELD_PATTERNS = [
   ['receitaLiquida', /\breceitas? (?:l[ií]quidas? de vendas(?: e\/ou servi[cç]os)?|de vendas?|(?:operaciona(?:l|is) )?l[ií]quidas?|brutas?)\b|^receita total\b|\bvendas l[ií]quidas\b|\bfaturamento\b/i],
   ['custoProdutosVendidos', /\bcustos? (?:d[ao]s? bens(?: e\/ou servi[cç]os)?(?: vendidos)?|d[ao]s? produtos?(?: e servi[cç]os)?(?: vendidos)?|d[ao]s? mercadorias (?:(?:e (?:d[ao]s? )?servi[cç]os )?(?:re)?vendid[oa]s)|d[ao]s? servi[cç]os prestados|das vendas)\b|^(?:cmv|cpv|csp)\b|^custos operacionais\b|^custos? d[ao]s? (?:im[oó]veis|unidades|obras)(?: vendid[oa]s)?\b/i],
   ['lucroBruto', /\b(?:lucro|resultado) bruto\b/i],
-  ['ebit', /\b(?:lucro|resultado) antes do resultado financeiro\b|\bresultado operacional\b(?! l[ií]quido| antes d[aeo]s? (?:impostos?|tributos|ir\b))|\blucro(?: \(preju[ií]zo\))? operacional\b(?! antes d[aeo]s? (?:impostos?|tributos|ir\b))|\bebit\b/i],
-  ['lucroLiquido', /\b(?:lucro|resultado) l[ií]quido(?: \(preju[ií]zo\))? (?:consolidado )?do (?:per[ií]odo|exerc[ií]cio)\b|\blucro(?: \(preju[ií]zo\)|\/preju[ií]zo)?(?: l[ií]quido)? (?:consolidado )?do (?:per[ií]odo|exerc[ií]cio)\b|^(?:lucro|preju[ií]zo|lucro \(preju[ií]zo\)) l[ií]quido(?= -?\(?\d)|^preju[ií]zo(?: l[ií]quido)? do (?:per[ií]odo|exerc[ií]cio)\b/i],
+  ['ebit', /\b(?:lucro|resultado)(?: \(preju[ií]zo\))? antes (?:do resultado financeiro|das (?:receitas e despesas|despesas e receitas) financeiras)\b|\bresultado operacional\b(?! l[ií]quido| antes d[aeo]s? (?:impostos?|tributos|ir\b))|\blucro(?: \(preju[ií]zo\))? operacional\b(?! antes d[aeo]s? (?:impostos?|tributos|ir\b))|\bebit\b/i],
+  ['lucroLiquido', /^(?:\d[\d.]*\s+)?resultado (?:l[ií]quido )?do (?:per[ií]odo|exerc[ií]cio)\b|\b(?:lucro|resultado) l[ií]quido(?: \(preju[ií]zo\))? (?:consolidado )?do (?:per[ií]odo|exerc[ií]cio)\b|\blucro(?: \(preju[ií]zo\)|\/preju[ií]zo)?(?: l[ií]quido)? (?:consolidado )?do (?:per[ií]odo|exerc[ií]cio)\b|^(?:lucro|preju[ií]zo|lucro \(preju[ií]zo\)) l[ií]quido(?= -?\(?\d)|^preju[ií]zo(?: l[ií]quido)? do (?:per[ií]odo|exerc[ií]cio)\b/i],
   ['lucroContinuadas', /\b(?:resultado|lucro(?:\/preju[ií]zo)?) l[ií]quido das? opera[cç][oõ]es continuadas\b/i],
   ['caixa', /(?:^|\s)caixa e equivalentes de caixa\b|^(?:\d[\d.]*\s+)?caixa\b|\bdisponibilidades\b|^(?:\d[\d.]*\s+)?dispon[ií]vel\b/i],
   ['contasReceber', /(?:^|\s)contas a receber\b|^(?:\d[\d.]*\s+)?clientes\b|\bduplicatas a receber\b/i],
@@ -494,7 +494,7 @@ function monthsInPeriod(label){
 function mergeSplitRows(rows){
   const isLetters = r => /[A-Za-zÀ-ú]{3,}/.test(r.text.replace(/\bn\.a\.|\bp\.p\.?/gi, ''));
   const valueOnly = r => !isLetters(r) && r.items.some(it => /^-?\(?\d{1,3}(?:\.\d{3})+(?:,\d+)?\)?$|^\(\d[\d.,]*\)$/.test(it.str));
-  const labelOnly = r => isLetters(r) && !r.items.some(it => NUMTOK_RE.test(it.str));
+  const labelOnly = r => isLetters(r) && r.items.every((it, k) => !NUMTOK_RE.test(it.str) || (k === r.items.length - 1 && /^\d{1,2}[a-z]?$/i.test(it.str)));   // aceita nota no fim ("... líquida 18")
   const used = new Set();
   rows.forEach((r, i) => {
     if (!valueOnly(r)) return;
@@ -672,6 +672,15 @@ function detectColumns(rows){
   if (headerTokens.length && !headerTokens[0].range){
     const near = rows.filter(r => r.y !== headerY && Math.abs(r.y - headerY) <= 3).flatMap(r => r.items.filter(it => isPeriodToken(it.str)));
     if (near.length) headerTokens = headerTokens.concat(near).sort((a, b) => a.x - b.x);
+    // data deslocada até 15 pt (ex.: "31/12/2024" em cima de "(Reapresentado)", ao lado de "31/12/2025"): entra se estiver
+    // numa posição nova, sem linha de valores entre as duas, e com o mesmo formato das datas já achadas
+    const isDate = t => DATE_RE.test(t.str);
+    if (headerTokens.every(isDate)){
+      const far = rows.filter(r => Math.abs(r.y - headerY) > 3 && Math.abs(r.y - headerY) <= 15)
+        .filter(r => !rows.some(m => (m.y - r.y) * (m.y - headerY) < 0 && hasNumbers(m.items) && !m.items.some(isDate)))
+        .flatMap(r => r.items.filter(it => isDate(it) && headerTokens.every(h => Math.abs(h.x - it.x) > 20)));
+      if (far.length) headerTokens = headerTokens.concat(far).sort((a, b) => a.x - b.x);
+    }
   }
   if (!headerTokens.length){
     // cabeçalho só com anos (ex.: "2025  2024", "Exercício 2025", "de 2025"): fora os anos, a linha só pode ter
@@ -682,7 +691,13 @@ function detectColumns(rows){
       if (yrs.length < 2) continue;
       const minX = Math.min(...yrs.map(it => it.x));
       const others = row.items.filter(it => !YEARISH_RE.test(it.str) && !/^notas?$/i.test(it.str) && !ENTITY_RE.test(it.str));
-      const okOthers = others.every(it => it.x < minX && it.str.length <= 25 && !/\d/.test(it.str));
+      let okOthers = others.every(it => it.x < minX && it.str.length <= 25 && !/\d/.test(it.str));
+      // balanço lado a lado: "Ativo 2024 2023  Passivo e patrimônio líquido 2024 2023" (dois blocos iguais de anos, rótulo no meio)
+      if (!okOthers && yrs.length >= 4 && yrs.length % 2 === 0){
+        const ys = yrs.slice().sort((a, b) => a.x - b.x), h = ys.length / 2;
+        const same = ys.slice(0, h).every((y, k) => YEARISH_RE.exec(y.str)[1] === YEARISH_RE.exec(ys[k + h].str)[1]);
+        okOthers = same && others.every(it => !/\d/.test(it.str) && it.str.length <= 40 && (it.x < ys[0].x || (it.x > ys[h - 1].x && it.x < ys[h].x)));
+      }
       if (okOthers && yrs.length > headerTokens.length){ headerY = row.y; headerTokens = yrs.map(it => Object.assign({}, it, { str: YEARISH_RE.exec(it.str)[1] })); }
     }
   }
@@ -1036,7 +1051,8 @@ function parsePage(rows, found, pageIdx, ctx){
     // seção do ativo não circulante (sem código de conta): título "Ativo não circulante"/"Realizável a longo prazo",
     // ou a linha "Ativo circulante" vindo DEPOIS do caixa (subtotal no fim do grupo, como na Petrobras)
     // de que lado do balanço estamos: linha "Ativo" / "Passivo" (sozinha ou com "Nota" e as datas)
-    const bare = labelText.replace(/\b(?:notas?|explicativas?)\b/gi, '').replace(/\(?\d{1,2}[./]\d{1,2}[./]\d{2,4}\)?/g, '').replace(/\s+/g, ' ').trim();
+    const bare = labelText.replace(/\b(?:notas?|explicativas?)\b/gi, '').replace(/\(?\d{1,2}[./]\d{1,2}[./]\d{2,4}\)?/g, '')
+      .replace(/\b(?:19|20)\d{2}\b/g, '').replace(/\s+/g, ' ').trim();   // "Ativo 2024 2023" também marca o lado
     if (/^ativos?$/i.test(bare)) ctx.side = 'A';
     else if (/^passivos?(?: e patrim[oô]nio l[ií]quido)?$/i.test(bare)) ctx.side = 'P';
     // "Circulante" / "Não circulante" sozinhos: o grupo depende do lado
@@ -1464,8 +1480,34 @@ function companyHints(pages){
     .filter(n => !/^(Companhia|Empresa|Controladora|Sociedade|Entidade|Cia)$/i.test(n));
   return { domain: mostFrequent(doms), hint: mostFrequent(names) };
 }
+// nome da empresa no cabeçalho das demonstrações: a linha logo acima do título ("Grupo Zinho" / "Balanços patrimoniais..."),
+// quando se repete em pelo menos duas demonstrações
+const AUDITOR_RE = /\baudit|\bconsultoria\b|\bcontabilidade\b|\badvogados\b|\bassessoria\b/i;
+function headerCompany(pages){
+  const cnt = {};
+  for (const rows of pages){
+    for (let i = 1; i < rows.length; i++){
+      const st = stmtOf(rows[i].text);
+      if (!st || st === 'other') continue;
+      for (let j = i - 1; j >= Math.max(0, i - 2); j--){
+        const t = rows[j].text.trim().replace(/[.\s]+$/, '');
+        if (t.length < 3 || t.length > 70 || /\d{2}/.test(t) || !/[A-Za-zÀ-ú]{3}/.test(t) || stmtOf(t) || AUDITOR_RE.test(t)
+          || /^(?:em\s|\(|valores|p[aá]gina|demonstra|balan|notas?\b|ativo|passivo|dfs?\b|anexos?\b|tabela|quadro|ifrs|consolidad|controladora|individua)/i.test(t)
+          || t.split(/\s+/).length > 6) continue;
+        (cnt[t] = cnt[t] || new Set()).add(st); break;
+      }
+    }
+  }
+  // tem que encabeçar pelo menos duas demonstrações diferentes (balanço e DRE, por exemplo)
+  const best = Object.entries(cnt).sort((a, b) => b[1].size - a[1].size)[0];
+  return best && best[1].size >= 2 ? best[0] : null;
+}
 function companyLabel(pages){
-  const nameLine = pages.flat().find(l => COMPANY_RE.test(l.text) && l.text.length < 80 && !/\d{2,}\s+\d/.test(l.text));
+  // 1º razão social (S.A., Ltda...) nas primeiras páginas; 2º nome repetido no cabeçalho das demonstrações ("Grupo Zinho"); 3º razão social no resto
+  const isLegal = l => COMPANY_RE.test(l.text) && l.text.length < 80 && !/\d{2,}\s+\d/.test(l.text) && !AUDITOR_RE.test(l.text);
+  const early = pages.slice(0, 10).flat().find(isLegal);
+  if (!early){ const hc = headerCompany(pages); if (hc && !COMPANY_RE.test(hc)) return hc; }   // nome sem S.A./Ltda (ex.: "Grupo Zinho")
+  const nameLine = early || pages.flat().find(l => COMPANY_RE.test(l.text) && l.text.length < 80 && !/\d{2,}\s+\d/.test(l.text) && !AUDITOR_RE.test(l.text));
   if (nameLine) return nameLine.text.replace(/\s*\bp[áa]gina\s*\d+.*$/i, '').replace(/\s*\bp[áa]g\.?\s*\d+.*$/i, '')
     .replace(/^(?:itr|dfp)\b.*?\d{2}\/\d{2}\/\d{4}\s*-\s*/i, '')   // cabeçalho do PDF da CVM: 'ITR - Informações Trimestrais - 30/06/2026 - '
     .replace(/\s*vers[aã]o\s*:?\s*\d+.*$/i, '')                    // '... Versão : 1'
